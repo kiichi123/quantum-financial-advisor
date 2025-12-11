@@ -92,9 +92,24 @@ function displayResults(data) {
     document.getElementById('expectedReturn').textContent =
         (expectedReturn >= 0 ? '+' : '') + (expectedReturn * 100).toFixed(1) + '%';
 
-    // Risk
-    const riskPercentage = (data.result.risk_probability * 100).toFixed(1);
-    document.getElementById('riskValue').textContent = `${riskPercentage}%`;
+    // Risk Metrics (CVaR)
+    const risk = data.risk || {};
+
+    // VaR (Value at Risk)
+    const varValue = (risk.var_classical || 0) * 100;
+    document.getElementById('varValue').textContent = varValue.toFixed(1) + '%';
+
+    // CVaR (Conditional VaR / Expected Shortfall)
+    const cvarValue = (risk.cvar || 0) * 100;
+    document.getElementById('cvarValue').textContent = cvarValue.toFixed(1) + '%';
+
+    // Volatility
+    const volatility = (risk.volatility || 0) * 100;
+    document.getElementById('volatilityValue').textContent = volatility.toFixed(1) + '%';
+
+    // Max Drawdown
+    const maxDrawdown = (risk.max_drawdown || 0) * 100;
+    document.getElementById('maxDrawdownValue').textContent = maxDrawdown.toFixed(1) + '%';
 
     // Candidate Stocks
     const candidateStocks = document.getElementById('candidateStocks');

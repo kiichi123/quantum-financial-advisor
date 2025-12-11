@@ -78,8 +78,9 @@ def analyze():
             selected_names.append(analysis["names"][i] if i < len(analysis["names"]) else tickers[i])
             weights.append(1.0 / len(indices) if indices else 0)
             
-        # 3. Calculate Risk (Quantum VaR)
-        risk_prob = quantum_lib.calculate_risk_qae(selection_binary, mu, sigma)
+        # 3. Calculate Risk with Enhanced CVaR
+        from cvar_estimator import calculate_risk_qae_enhanced
+        risk_data = calculate_risk_qae_enhanced(selection_binary, mu, sigma)
         
         # Calculate expected return for selected portfolio
         if indices:
@@ -107,8 +108,14 @@ def analyze():
                 'selected_names': selected_names,
                 'weights': weights,
                 'expected_return': float(expected_return),
-                'risk_probability': float(risk_prob),
                 'optimal_value': float(optimal_value)
+            },
+            'risk': {
+                'var_probability': float(risk_data.get('var_probability', 0)),
+                'cvar': float(risk_data.get('cvar_estimate', 0)),
+                'var_classical': float(risk_data.get('var_classical', 0)),
+                'volatility': float(risk_data.get('volatility', 0)),
+                'max_drawdown': float(risk_data.get('max_drawdown', 0))
             }
         })
         

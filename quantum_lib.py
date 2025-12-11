@@ -16,6 +16,7 @@ from qiskit_optimization.algorithms import MinimumEigenOptimizer
 from llm_analyzer import analyze_with_llm
 from stock_data import get_stock_data
 from news_analyzer import aggregate_sentiment, get_market_news
+from cvar_estimator import calculate_risk_qae_enhanced, calculate_var_cvar_classical
 
 def analyze_market(user_input: str) -> dict:
     """

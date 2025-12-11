@@ -63,12 +63,24 @@
 
                 <!-- Risk Analysis -->
                 <div class="card glass">
-                    <h3>📊 量子リスク分析 (QAE)</h3>
+                    <h3>📊 量子リスク分析 (CVaR)</h3>
                     <div class="metric">
-                        <span class="label">損失確率 (10%超)</span>
-                        <span class="value risk" id="riskValue">-</span>
+                        <span class="label">VaR (95%)</span>
+                        <span class="value risk" id="varValue">-</span>
                     </div>
-                    <small>量子振幅推定による確率計算</small>
+                    <div class="metric">
+                        <span class="label">CVaR (期待ショートフォール)</span>
+                        <span class="value risk" id="cvarValue">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">ボラティリティ</span>
+                        <span class="value" id="volatilityValue">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">最大ドローダウン</span>
+                        <span class="value risk" id="maxDrawdownValue">-</span>
+                    </div>
+                    <small>量子振幅推定 + モンテカルロ</small>
                 </div>
 
                 <!-- Candidate Stocks -->
