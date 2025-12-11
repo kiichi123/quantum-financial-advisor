@@ -57,6 +57,10 @@ def analyze():
         # 1. Market Analysis (LLM + Real Data)
         analysis = quantum_lib.analyze_market(user_input)
         
+        # 1.5. Get Economic Indicators
+        from economic_data import get_all_economic_indicators
+        economic = get_all_economic_indicators()
+        
         tickers = analysis["tickers"]
         mu = analysis["mu"]
         sigma = analysis["sigma"]
@@ -116,6 +120,13 @@ def analyze():
                 'var_classical': float(risk_data.get('var_classical', 0)),
                 'volatility': float(risk_data.get('volatility', 0)),
                 'max_drawdown': float(risk_data.get('max_drawdown', 0))
+            },
+            'economic': {
+                'cpi': economic.get('cpi', {}),
+                'fed_rate': economic.get('fed_rate', {}),
+                'gdp': economic.get('gdp', {}),
+                'regime': economic.get('regime', {}),
+                'api_configured': economic.get('api_configured', False)
             }
         })
         

@@ -222,6 +222,39 @@ button:disabled {
     line-height: 1.4;
 }
 
+/* Economic Grid */
+.economic-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.economic-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.eco-label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.eco-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+@media (max-width: 600px) {
+    .economic-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* Stock List */
 .stock-list {
     margin-bottom: 1rem;

@@ -182,5 +182,29 @@ function displayResults(data) {
         }
     });
 
+    // Economic Indicators
+    const economic = data.economic || {};
+
+    // CPI
+    const cpi = economic.cpi || {};
+    const cpiChange = cpi.yoy_change || 0;
+    document.getElementById('cpiValue').textContent = cpiChange.toFixed(1) + '%';
+    document.getElementById('cpiValue').style.color = cpiChange > 3 ? '#f87171' : '#4ade80';
+
+    // Federal Funds Rate
+    const fedRate = economic.fed_rate || {};
+    document.getElementById('fedRateValue').textContent = (fedRate.value || 0).toFixed(2) + '%';
+
+    // GDP
+    const gdp = economic.gdp || {};
+    const gdpGrowth = gdp.growth || 0;
+    document.getElementById('gdpValue').textContent = (gdpGrowth >= 0 ? '+' : '') + gdpGrowth.toFixed(1) + '%';
+    document.getElementById('gdpValue').style.color = gdpGrowth >= 0 ? '#4ade80' : '#f87171';
+
+    // Economic Regime
+    const ecoRegime = economic.regime || {};
+    document.getElementById('ecoRegimeValue').textContent = ecoRegime.label || '-';
+    document.getElementById('ecoDescription').textContent = ecoRegime.description || '-';
+
     results.classList.remove('hidden');
 }
