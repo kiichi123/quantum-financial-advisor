@@ -255,6 +255,25 @@ button:disabled {
     }
 }
 
+/* Chart Grid */
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.chart-container {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Stock List */
 .stock-list {
     margin-bottom: 1rem;

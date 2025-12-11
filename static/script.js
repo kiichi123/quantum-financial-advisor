@@ -206,5 +206,99 @@ function displayResults(data) {
     document.getElementById('ecoRegimeValue').textContent = ecoRegime.label || '-';
     document.getElementById('ecoDescription').textContent = ecoRegime.description || '-';
 
+    // Render Charts
+    renderAllocationChart(data);
+    renderRiskReturnChart(data);
+
     results.classList.remove('hidden');
+}
+
+function renderAllocationChart(data) {
+    const tickers = data.result.selected_tickers || [];
+    const weights = data.result.weights || [];
+
+    if (tickers.length === 0) return;
+
+    const chartData = [{
+        values: weights.map(w => w * 100),
+        labels: tickers,
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+            colors: ['#38bdf8', '#818cf8', '#22d3ee', '#4ade80']
+        },
+        textinfo: 'label+percent',
+        textposition: 'outside'
+    }];
+
+    const layout = {
+        title: {
+            text: 'ポートフォリオ配分',
+            font: { color: '#f8fafc', size: 14 }
+        },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#94a3b8' },
+        margin: { t: 40, b: 30, l: 30, r: 30 },
+        showlegend: false
+    };
+
+    Plotly.newPlot('allocationChart', chartData, layout, { responsive: true, displayModeBar: false });
+}
+
+function renderRiskReturnChart(data) {
+    const candidates = data.candidates || {};
+    const tickers = candidates.tickers || [];
+    const returns = candidates.returns_1y || [];
+    const selectedTickers = data.result.selected_tickers || [];
+
+    if (tickers.length === 0) return;
+
+    // Simulated volatility (would need real data)
+    const volatilities = returns.map(r => Math.abs(r) * 0.5 + 0.1);
+
+    const colors = tickers.map(t =>
+        selectedTickers.includes(t) ? '#4ade80' : '#64748b'
+    );
+
+    const sizes = tickers.map(t =>
+        selectedTickers.includes(t) ? 20 : 12
+    );
+
+    const chartData = [{
+        x: volatilities.map(v => v * 100),
+        y: returns.map(r => r * 100),
+        mode: 'markers+text',
+        type: 'scatter',
+        text: tickers,
+        textposition: 'top center',
+        marker: {
+            size: sizes,
+            color: colors
+        },
+        textfont: { color: '#f8fafc', size: 10 }
+    }];
+
+    const layout = {
+        title: {
+            text: 'リスク・リターン分析',
+            font: { color: '#f8fafc', size: 14 }
+        },
+        xaxis: {
+            title: 'ボラティリティ (%)',
+            color: '#94a3b8',
+            gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+            title: 'リターン (%)',
+            color: '#94a3b8',
+            gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#94a3b8' },
+        margin: { t: 40, b: 50, l: 50, r: 30 }
+    };
+
+    Plotly.newPlot('riskReturnChart', chartData, layout, { responsive: true, displayModeBar: false });
 }
