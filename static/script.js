@@ -126,5 +126,46 @@ function displayResults(data) {
         dataSource.style.color = '#4ade80';
     }
 
+    // Sentiment Display
+    const sentiment = data.analysis.sentiment || {};
+    const sentimentBar = document.getElementById('sentimentBar');
+    const sentimentLabel = document.getElementById('sentimentLabel');
+    const sentimentSection = document.getElementById('sentimentSection');
+
+    if (sentiment.overall !== undefined) {
+        const overallPercent = (sentiment.overall * 100).toFixed(0);
+        sentimentBar.style.width = overallPercent + '%';
+
+        // Color based on sentiment
+        if (sentiment.overall > 0.6) {
+            sentimentBar.style.background = 'linear-gradient(90deg, #4ade80, #22d3ee)';
+            sentimentLabel.textContent = `📈 Bullish (${overallPercent}%)`;
+            sentimentLabel.style.color = '#4ade80';
+        } else if (sentiment.overall < 0.4) {
+            sentimentBar.style.background = 'linear-gradient(90deg, #f87171, #fbbf24)';
+            sentimentLabel.textContent = `📉 Bearish (${overallPercent}%)`;
+            sentimentLabel.style.color = '#f87171';
+        } else {
+            sentimentBar.style.background = 'linear-gradient(90deg, #fbbf24, #818cf8)';
+            sentimentLabel.textContent = `⚖️ Neutral (${overallPercent}%)`;
+            sentimentLabel.style.color = '#fbbf24';
+        }
+        sentimentSection.classList.remove('hidden');
+    } else {
+        sentimentSection.classList.add('hidden');
+    }
+
+    // News Headlines
+    const newsHeadlines = document.getElementById('newsHeadlines');
+    newsHeadlines.innerHTML = '';
+    (data.analysis.news_headlines || []).forEach(headline => {
+        if (headline) {
+            const item = document.createElement('div');
+            item.className = 'news-item';
+            item.textContent = '• ' + headline.substring(0, 80) + (headline.length > 80 ? '...' : '');
+            newsHeadlines.appendChild(item);
+        }
+    });
+
     results.classList.remove('hidden');
 }

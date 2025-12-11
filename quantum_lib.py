@@ -15,13 +15,14 @@ from qiskit_optimization.algorithms import MinimumEigenOptimizer
 # Import our modules
 from llm_analyzer import analyze_with_llm
 from stock_data import get_stock_data
+from news_analyzer import aggregate_sentiment, get_market_news
 
 def analyze_market(user_input: str) -> dict:
     """
-    Analyze market conditions using LLM and fetch real stock data.
+    Analyze market conditions using LLM, real stock data, and news sentiment.
     
     Returns:
-        dict with tickers, names, mu, sigma, reasoning
+        dict with tickers, names, mu, sigma, reasoning, sentiment
     """
     # Step 1: LLM Analysis
     llm_result = analyze_with_llm(user_input)
@@ -29,6 +30,13 @@ def analyze_market(user_input: str) -> dict:
     # Step 2: Get real stock data for recommended tickers
     tickers = llm_result.get("tickers", ["SPY", "QQQ", "DIA", "IWM"])
     stock_result = get_stock_data(tuple(tickers))
+    
+    # Step 3: Get sentiment data
+    sentiment_data = aggregate_sentiment(tickers)
+    
+    # Step 4: Get market news headlines
+    market_news = get_market_news(limit=3)
+    news_headlines = [n.get("headline", "") for n in market_news]
     
     return {
         "regime": llm_result.get("regime", "neutral"),
@@ -40,7 +48,9 @@ def analyze_market(user_input: str) -> dict:
         "sigma": stock_result["sigma"],
         "last_prices": stock_result.get("last_prices", []),
         "returns_1y": stock_result.get("returns_1y", []),
-        "synthetic": stock_result.get("synthetic", False)
+        "synthetic": stock_result.get("synthetic", False),
+        "sentiment": sentiment_data,
+        "news_headlines": news_headlines
     }
 
 def run_quantum_portfolio_optimization(mu, sigma, risk_factor=0.5, budget=2):

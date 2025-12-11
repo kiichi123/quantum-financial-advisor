@@ -93,7 +93,9 @@ def analyze():
                 'regime': analysis.get('regime', 'neutral'),
                 'sectors': analysis.get('sectors', []),
                 'reasoning': analysis.get('reasoning', ''),
-                'synthetic': analysis.get('synthetic', False)
+                'synthetic': analysis.get('synthetic', False),
+                'sentiment': analysis.get('sentiment', {}),
+                'news_headlines': analysis.get('news_headlines', [])
             },
             'candidates': {
                 'tickers': tickers,
