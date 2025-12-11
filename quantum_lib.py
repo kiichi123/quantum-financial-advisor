@@ -1,65 +1,55 @@
+"""
+Quantum Library - Core quantum computing logic for portfolio optimization
+Integrates with LLM and real stock data
+"""
 import numpy as np
-from qiskit_finance.data_providers import RandomDataProvider
 from qiskit_finance.applications.optimization import PortfolioOptimization
-from qiskit_algorithms import QAOA, SamplingVQE
+from qiskit_algorithms import QAOA
 from qiskit_algorithms.optimizers import COBYLA
 from qiskit.primitives import StatevectorSampler as Sampler
 from qiskit_finance.circuit.library import NormalDistribution
 from qiskit_algorithms import IterativeAmplitudeEstimation, EstimationProblem
 from qiskit import QuantumCircuit
+from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-# Mock Market Data Analysis
-def analyze_market(text_input):
+# Import our modules
+from llm_analyzer import analyze_with_llm
+from stock_data import get_stock_data
+
+def analyze_market(user_input: str) -> dict:
     """
-    Analyzes text input to determine market regime and select candidates.
+    Analyze market conditions using LLM and fetch real stock data.
+    
     Returns:
-        tickers (list): List of asset names.
-        mu (np.array): Expected returns.
-        sigma (np.array): Covariance matrix.
+        dict with tickers, names, mu, sigma, reasoning
     """
-    input_lower = text_input.lower()
+    # Step 1: LLM Analysis
+    llm_result = analyze_with_llm(user_input)
     
-    # Default: Balanced
-    regime = "neutral"
+    # Step 2: Get real stock data for recommended tickers
+    tickers = llm_result.get("tickers", ["SPY", "QQQ", "DIA", "IWM"])
+    stock_result = get_stock_data(tuple(tickers))
     
-    if "inflation" in input_lower or "conflict" in input_lower:
-        regime = "defensive"
-    elif "growth" in input_lower or "tech" in input_lower or "boom" in input_lower:
-        regime = "aggressive"
-        
-    print(f"Market Regime Detected: {regime}")
-    
-    # Generate Synthetic Data based on regime
-    num_assets = 4
-    if regime == "defensive":
-        tickers = ["Gold", "Utility", "Bonds", "Consumer Staples"]
-        mu = np.array([0.05, 0.04, 0.03, 0.04]) # Stable lower returns
-        sigma = np.array([
-            [0.02, 0.005, 0.001, 0.01],
-            [0.005, 0.02, 0.005, 0.01],
-            [0.001, 0.005, 0.01, 0.001],
-            [0.01, 0.01, 0.001, 0.02]
-        ])
-    elif regime == "aggressive":
-        tickers = ["Tech", "Crypto", "BioTech", "Semiconductor"]
-        mu = np.array([0.15, 0.20, 0.12, 0.18]) # High returns
-        # Higher Volatility
-        sigma = np.eye(4) * 0.08 + 0.02 
-    else:
-        tickers = ["S&P500", "Bonds", "RealEstate", "Commodities"]
-        mu = np.array([0.08, 0.03, 0.06, 0.05])
-        sigma = np.eye(4) * 0.04 + 0.01
-        
-    return tickers, mu, sigma
+    return {
+        "regime": llm_result.get("regime", "neutral"),
+        "sectors": llm_result.get("sectors", []),
+        "reasoning": llm_result.get("reasoning", ""),
+        "tickers": stock_result["tickers"],
+        "names": stock_result.get("names", stock_result["tickers"]),
+        "mu": stock_result["mu"],
+        "sigma": stock_result["sigma"],
+        "last_prices": stock_result.get("last_prices", []),
+        "returns_1y": stock_result.get("returns_1y", []),
+        "synthetic": stock_result.get("synthetic", False)
+    }
 
 def run_quantum_portfolio_optimization(mu, sigma, risk_factor=0.5, budget=2):
     """
     Uses QAOA/VQE to find optimal portfolio selection.
-    Maximize: mu.T * x - q * x.T * sigma * x
-    Subject to: sum(x) = budget (number of assets to pick)
     """
+    mu = np.array(mu)
+    sigma = np.array(sigma)
     
-    # Define Portfolio Optimization Problem
     portfolio = PortfolioOptimization(
         expected_returns=mu,
         covariances=sigma,
@@ -69,16 +59,8 @@ def run_quantum_portfolio_optimization(mu, sigma, risk_factor=0.5, budget=2):
     
     qp = portfolio.to_quadratic_program()
     
-    # Solve using QAOA (Simulated)
-    # Using COBYLA optimizer
     optimizer = COBYLA(maxiter=50)
-    
-    # Using SamplingVQE as QAOA is a type of VQE
-    # Or just use QAOA class directly
     qaoa = QAOA(sampler=Sampler(), optimizer=optimizer, reps=1)
-    
-    # We need a converter to Qiskit Optimization Algorithms
-    from qiskit_optimization.algorithms import MinimumEigenOptimizer
     
     meo = MinimumEigenOptimizer(qaoa)
     result = meo.solve(qp)
@@ -91,39 +73,38 @@ def run_quantum_portfolio_optimization(mu, sigma, risk_factor=0.5, budget=2):
 
 def calculate_risk_qae(selection, mu, sigma, threshold=-0.1):
     """
-    Calculates risk using QAE for the SELECTED portfolio.
-    (Simplified from 02_quantum_optimize.py)
+    Calculates risk using Quantum Amplitude Estimation.
     """
-    # Filter stats for selected assets
-    # selection is boolean array (0 or 1)
+    mu = np.array(mu)
+    sigma = np.array(sigma)
+    
     indices = [i for i, x in enumerate(selection) if x > 0.5]
     
     if not indices:
         return 0.0
     
-    # Create sub-portfolio
-    # If equal weight among selected
     weights = np.zeros(len(mu))
     for i in indices:
         weights[i] = 1.0 / len(indices)
         
-    # Portfolio Mean/Var
     p_mu = np.dot(weights, mu)
     p_var = np.dot(weights, np.dot(sigma, weights))
-    p_sigma = np.sqrt(p_var)
+    p_sigma = np.sqrt(max(p_var, 1e-8))
     
-    # Low Precision QAE for Speed
     num_qubits = 4
     low = p_mu - 3 * p_sigma
     high = p_mu + 3 * p_sigma
     bounds = (low, high)
     
-    uncertainty_model = NormalDistribution(num_qubits, mu=p_mu, sigma=p_sigma, bounds=bounds)
+    try:
+        uncertainty_model = NormalDistribution(num_qubits, mu=p_mu, sigma=p_sigma, bounds=bounds)
+    except Exception as e:
+        print(f"NormalDistribution failed: {e}")
+        return 0.05  # Fallback
     
-    # Value Calculation
     def get_values():
         vals = []
-        step = (high - low) / (2**num_qubits - 1)
+        step = (high - low) / (2**num_qubits - 1) if high > low else 0.01
         for i in range(2**num_qubits):
             vals.append(low + i * step)
         return vals
@@ -147,7 +128,11 @@ def calculate_risk_qae(selection, mu, sigma, threshold=-0.1):
                 qc.x(q)
                 
     problem = EstimationProblem(state_preparation=qc, objective_qubits=[uncertainty_model.num_qubits])
-    ae = IterativeAmplitudeEstimation(epsilon_target=0.1, alpha=0.1, sampler=Sampler()) # Very loose for speed
+    ae = IterativeAmplitudeEstimation(epsilon_target=0.1, alpha=0.1, sampler=Sampler())
     
-    res = ae.estimate(problem)
-    return res.estimation        
+    try:
+        res = ae.estimate(problem)
+        return res.estimation
+    except Exception as e:
+        print(f"QAE failed: {e}")
+        return 0.05

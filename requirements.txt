@@ -12,3 +12,9 @@ qiskit-aer>=0.14.0
 qiskit-algorithms>=0.3.0
 qiskit-finance>=0.4.0
 qiskit-optimization>=0.6.0
+
+# LLM & Data
+google-generativeai>=0.8.0
+finnhub-python>=2.4.0
+yfinance>=0.2.0
+pandas>=2.0.0

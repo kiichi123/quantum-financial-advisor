@@ -19,9 +19,7 @@ async function analyzeMarket() {
     try {
         const response = await fetch('/api/analyze', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: userInput }),
         });
 
@@ -30,7 +28,7 @@ async function analyzeMarket() {
         if (data.status === 'success') {
             displayResults(data);
         } else {
-            alert('エラーが発生しました: ' + data.message);
+            alert('エラー: ' + data.message);
         }
 
     } catch (error) {
@@ -39,42 +37,94 @@ async function analyzeMarket() {
     } finally {
         loading.classList.add('hidden');
         analyzeBtn.disabled = false;
-        btnText.textContent = "量子分析を開始";
+        btnText.textContent = "🚀 量子分析を開始";
     }
 }
 
 function displayResults(data) {
     const results = document.getElementById('results');
-    const tickerList = document.getElementById('tickerList');
-    const riskValue = document.getElementById('riskValue');
-    const regimeValue = document.getElementById('regimeValue');
 
-    // Update Ticker List
-    tickerList.innerHTML = '';
-    data.result.selected_tickers.forEach(ticker => {
-        const li = document.createElement('li');
-        li.textContent = ticker;
-        li.style.animation = 'fadeIn 0.5s ease-out';
-        tickerList.appendChild(li);
+    // Regime Badge
+    const regimeBadge = document.getElementById('regimeBadge');
+    const regime = data.analysis.regime;
+    const regimeLabels = {
+        'aggressive': '🚀 攻撃的 (Aggressive)',
+        'defensive': '🛡️ 防御的 (Defensive)',
+        'neutral': '⚖️ 中立 (Neutral)'
+    };
+    regimeBadge.textContent = regimeLabels[regime] || regime;
+    regimeBadge.className = 'regime-badge ' + regime;
+
+    // Reasoning
+    document.getElementById('reasoning').textContent = data.analysis.reasoning || '-';
+
+    // Sectors
+    const sectorsDiv = document.getElementById('sectors');
+    sectorsDiv.innerHTML = '';
+    (data.analysis.sectors || []).forEach(sector => {
+        const tag = document.createElement('span');
+        tag.className = 'sector-tag';
+        tag.textContent = sector;
+        sectorsDiv.appendChild(tag);
     });
 
-    // Update Values
-    const riskPercentage = (data.result.risk_probability * 100).toFixed(1);
-    riskValue.textContent = `${riskPercentage}%`;
-    
-    // Determine Regime (Just a heuristic based on available tickers or randomness for now in display)
-    // In real app, backend sends the regime name.
-    // Let's deduce from Logic in backend: 
-    // tickers: Gold/Utility -> Defensive
-    // tickers: Tech/Crypto -> Aggressive
-    
-    let regime = "Balanced (中立)";
-    const tickers = data.regime_data.tickers;
-    if (tickers.includes("Gold")) regime = "Defensive (守り)";
-    if (tickers.includes("Crypto")) regime = "Aggressive (攻め)";
-    
-    regimeValue.textContent = regime;
+    // Selected Stocks
+    const selectedStocks = document.getElementById('selectedStocks');
+    selectedStocks.innerHTML = '';
+    data.result.selected_tickers.forEach((ticker, i) => {
+        const name = data.result.selected_names?.[i] || ticker;
+        const weight = data.result.weights?.[i] || 0;
 
-    // Show Results
+        const item = document.createElement('div');
+        item.className = 'stock-item';
+        item.innerHTML = `
+            <div>
+                <span class="ticker">${ticker}</span>
+                <span class="name">${name}</span>
+            </div>
+            <span class="weight">${(weight * 100).toFixed(0)}%</span>
+        `;
+        selectedStocks.appendChild(item);
+    });
+
+    // Expected Return
+    const expectedReturn = data.result.expected_return || 0;
+    document.getElementById('expectedReturn').textContent =
+        (expectedReturn >= 0 ? '+' : '') + (expectedReturn * 100).toFixed(1) + '%';
+
+    // Risk
+    const riskPercentage = (data.result.risk_probability * 100).toFixed(1);
+    document.getElementById('riskValue').textContent = `${riskPercentage}%`;
+
+    // Candidate Stocks
+    const candidateStocks = document.getElementById('candidateStocks');
+    candidateStocks.innerHTML = '';
+    data.candidates.tickers.forEach((ticker, i) => {
+        const name = data.candidates.names?.[i] || ticker;
+        const returnVal = data.candidates.returns_1y?.[i] || 0;
+        const returnClass = returnVal >= 0 ? 'positive' : 'negative';
+
+        const item = document.createElement('div');
+        item.className = 'candidate-item';
+        item.innerHTML = `
+            <div class="ticker">${ticker}</div>
+            <div class="name" style="font-size:0.75rem;color:#64748b;">${name}</div>
+            <div class="return ${returnClass}">
+                ${returnVal >= 0 ? '+' : ''}${(returnVal * 100).toFixed(1)}% (1Y)
+            </div>
+        `;
+        candidateStocks.appendChild(item);
+    });
+
+    // Data source
+    const dataSource = document.getElementById('dataSource');
+    if (data.analysis.synthetic) {
+        dataSource.textContent = '⚠️ シミュレーションデータを使用中（実データ取得に失敗）';
+        dataSource.style.color = '#fbbf24';
+    } else {
+        dataSource.textContent = '✓ Yahoo Finance からリアルタイムデータを取得';
+        dataSource.style.color = '#4ade80';
+    }
+
     results.classList.remove('hidden');
 }
