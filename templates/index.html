@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Financial Advisor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Quantum <span class="highlight">Financial Advisor</span></h1>
+            <p>社会情勢を入れると、量子AIが最適なポートフォリオを構築します。</p>
+        </header>
+
+        <main>
+            <div class="input-section glass">
+                <textarea id="userInput" placeholder="社会情勢を入力するか、ニュース記事のURLを貼り付けてください。"></textarea>
+                <button id="analyzeBtn" onclick="analyzeMarket()">
+                    <span id="btnText">量子分析を開始</span>
+                </button>
+            </div>
+
+            <div id="loading" class="hidden">
+                <div class="quantum-loader"></div>
+                <p>量子回路を実行中... (VQE Optimizing)</p>
+            </div>
+
+            <div id="results" class="results-section hidden">
+                <div class="card glass">
+                    <h3>推奨ポートフォリオ</h3>
+                    <ul id="tickerList"></ul>
+                </div>
+
+                <div class="card glass">
+                    <h3>量子リスク分析 (QAE)</h3>
+                    <p>損失確率: <span id="riskValue" class="value">--</span></p>
+                    <small>※ 推定損失(-10%)を超える確率</small>
+                </div>
+
+                <div class="card glass" style="grid-column: span 2;">
+                    <h3>分析データ</h3>
+                    <p>検出レジーム: <span id="regimeValue">--</span></p>
+                    <div id="chart"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
